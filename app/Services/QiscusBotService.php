@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\Log;
 
 class QiscusBotService
 {
-    protected $intents = [
-        'kompleks' => ['kompleks', 'rumit', 'sulit'],
-        'bantuan_khusus' => ['khusus', 'spesial', 'urgent']
-    ];
+    protected
+        $responses = [
+            'default' => 'Saya adalah bot otomatis. Saya akan membantu Anda sebisa mungkin.',
+            'greeting' => 'Hai! Selamat datang di layanan JF3 kami. Ada yang bisa saya bantu?',
+        ];
 
     public function processMessage($payload)
     {
@@ -22,13 +23,9 @@ class QiscusBotService
 
     protected function handleBotResponse($message)
     {
-        // Logika respons bot sederhana
-        $responses = [
-            'default' => 'Saya adalah bot otomatis. Saya akan membantu Anda sebisa mungkin.',
-            'greeting' => 'Hai! Ada yang bisa saya bantu hari ini?',
-        ];
 
-        $botResponse = $this->determineResponse($message, $responses);
+
+        $botResponse = $this->determineResponse($message, $this->responses);
 
         return $botResponse;
     }
@@ -38,7 +35,13 @@ class QiscusBotService
         $lowercaseMessage = strtolower($message);
 
         if (preg_match('/halo|hai|hello/i', $lowercaseMessage)) {
-            return $responses['greeting'];
+            $response['message'] = $responses['greeting'];
+            $response['type'] = 'text';
+            return $response;
+        } else if (preg_match('/webminar/i', $lowercaseMessage)) {
+            $response['type'] = 'file_attachment';
+            $response['payload'] = '{"url": "https://image-archive.developerhub.io/image/upload/22512/bn3dkt8x2grrv3rpzv9v/1576557437.png","caption": "Undagan untuk mengikuti webinar"}';
+            return $response;
         }
 
         return $responses['default'];

@@ -96,18 +96,20 @@ class QiscusWebhookController extends Controller
         return $payload['payload'];
     }
 
-    private function sendResponse($message, $roomId)
+    private function sendResponse($response, $roomId)
     {
         $url = $this->makeUrl();
         $headers = $this->getHeaders();
 
         $data = [
             'room_id' => $roomId,
-            'message' => $message,
-            'type' => 'text',
-            'sender_email' => $this->email
-        ];
+            'message' => $response['message'] ?? '',
+            'type' => $response['type'] ?? 'text',
+            'sender_email' => $this->email,
+            'payload' => $response['payload'] ?? ''
 
+        ];
+        Log::info('Bot Response Data: ' . json_encode($data));
         $response = Http::withHeaders($headers)
             ->post($url, $data);
 
