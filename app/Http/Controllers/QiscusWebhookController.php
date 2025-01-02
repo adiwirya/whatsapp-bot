@@ -15,6 +15,7 @@ class QiscusWebhookController extends Controller
     protected $secretKey;
     protected $baseUrl;
     protected $email;
+    protected $channelId;
 
     public function __construct(QiscusBotService $botService)
     {
@@ -24,16 +25,19 @@ class QiscusWebhookController extends Controller
         $this->secretKey = env('QISCUS_SECRET_KEY');
         $this->baseUrl = env('QISCUS_BASE_URL');
         $this->email = env('QISCUS_EMAIL');
+        $this->channelId = env('QISCUS_CHANNEL_ID');
 
         $this->validateConfig();
     }
 
     private function validateConfig()
     {
-        if (empty($this->appId) || empty($this->secretKey) || empty($this->baseUrl)) {
+        if (empty($this->appId) || empty($this->secretKey) || empty($this->baseUrl) || empty($this->email) || empty($this->channelId)) {
             Log::error('Qiscus configuration missing', [
                 'app_id' => $this->appId,
-                'base_url' => $this->baseUrl
+                'base_url' => $this->baseUrl,
+                'email' => $this->email,
+                'channel_id' => $this->channelId
             ]);
             throw new \Exception('Qiscus configuration is incomplete');
         }
@@ -53,6 +57,13 @@ class QiscusWebhookController extends Controller
         return $this->baseUrl . $this->appId . '/bot';
     }
 
+    protected function makeWAUrl()
+    {
+        return $this->baseUrl . 'whatsapp/v1/' . $this->appId . '/' . $this->channelId . '/messages';
+    }
+
+
+
     public function handleWebhook(Request $request)
     {
         try {
@@ -61,12 +72,15 @@ class QiscusWebhookController extends Controller
 
             // Proses pesan menggunakan bot service
             $response = $this->botService->processMessage($payload);
-
             // Kirim balasan
-            $this->sendResponse($response, $payload['room']['id']);
+            if ($response['status'] = true) {
+                $status = $this->sendWAResponse($response, $payload['from']['email']);
+            } else {
+                $status = $this->sendResponse($response, $payload['room']['id']);
+            }
 
             return response()->json([
-                'message' => 'Pesan berhasil diproses'
+                'message' => $status
             ]);
         } catch (\Exception $e) {
             Log::error('Webhook Error: ' . $e->getMessage());
@@ -114,5 +128,28 @@ class QiscusWebhookController extends Controller
             ->post($url, $data);
 
         Log::info('Bot Response: ' . $response->getBody());
+
+        return $response->getBody();
+    }
+
+    private function sendWAResponse($response, $no)
+    {
+        $url = $this->makeWAUrl();
+        $headers = $this->getHeaders();
+        $payload = json_decode($response['payload'], true);
+        $data = [
+            'recipient_type' => 'individual',
+            'type' => $response['type'] ?? 'text',
+            'to' => $no,
+            $response['type'] ?? 'text' => $payload ?? ''
+
+        ];
+        Log::info('Bot WA Response Data: ' . json_encode($data));
+        $response = Http::withHeaders($headers)
+            ->post($url, $data);
+
+        Log::info('Bot Response WA: ' . $response->getBody());
+
+        return $response->getBody();
     }
 }
