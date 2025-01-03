@@ -69,16 +69,15 @@ class QiscusWebhookController extends Controller
         try {
             // Validasi payload dari Qiscus
             $payload = $this->validatePayload($request);
-
             // Proses pesan menggunakan bot service
             $response = $this->botService->processMessage($payload);
             // Kirim balasan
-            if ($response['status'] = true) {
+            if ($response['status'] == true) {
+                dd($response);
                 $status = $this->sendWAResponse($response, $payload['from']['email']);
             } else {
                 $status = $this->sendResponse($response, $payload['room']['id']);
             }
-
             return response()->json([
                 'message' => $status
             ]);

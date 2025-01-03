@@ -53,23 +53,27 @@ class QiscusBotService
         if (preg_match('/halo|hai|hello/i', $lowercaseMessage)) {
             $response['message'] = $responses['greeting'];
             $response['type'] = 'text';
+            $response['status'] = false;
             return $response;
         } else if (preg_match('/daftar/i', $lowercaseMessage)) {
             $response['type'] = 'template';
-            $response['status'] = true;
             $response['payload'] = '{"name":"flow_sign_up","language":{"code":"en"},"components":[{"type":"header","parameters":[{"type":"image","image":{"link":"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/1022px-WhatsApp.svg.png"}}]},{"type":"button","sub_type":"flow","index":"0"}]}';
+            $response['status'] = true;
             return $response;
         } else if (preg_match('/interactive message/i', $lowercaseMessage)) {
             $response['message'] = $responses['thanks'];
             $response['type'] = 'text';
+            $response['status'] = false;
             return $response;
         } else if (preg_match('/webminar/i', $lowercaseMessage)) {
             $response['type'] = 'file_attachment';
             $response['payload'] = '{"url": "https://image-archive.developerhub.io/image/upload/22512/bn3dkt8x2grrv3rpzv9v/1576557437.png","caption": "Undagan untuk mengikuti webinar"}';
+            $response['status'] = false;
             return $response;
         } else {
             $response['message'] = 'Hai ' . $name . ' ' . $responses['default'];
             $response['type'] = 'text';
+            $response['status'] = false;
             return $response;
         }
     }
